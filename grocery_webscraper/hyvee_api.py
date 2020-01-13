@@ -96,6 +96,10 @@ def find_recent_purchases(browser: webdriver.Firefox, logged_in: bool, timeout_d
         except ElementNotInteractableException as _:
             print("Reached the end of the product list")
             break
+        except TimeoutException as _:
+            print('Load more button never appeared, refreshing, and trying again')
+            browser.refresh()
+            page = 1
 
     items = WebDriverWait(browser,
                           timeout_delay).until(EC.presence_of_element_located((By.CSS_SELECTOR,
