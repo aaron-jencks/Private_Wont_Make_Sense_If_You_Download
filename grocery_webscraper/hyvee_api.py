@@ -6,7 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import TimeoutException, ElementNotInteractableException
+from selenium.common.exceptions import TimeoutException, ElementNotInteractableException, StaleElementReferenceException
 
 from WebsiteDescriptor import Website, WebsiteDescriptor
 
@@ -77,29 +77,22 @@ def find_recent_purchases(browser: webdriver.Firefox, logged_in: bool, timeout_d
         print('Logging in')
         login(browser, timeout_delay=timeout_delay)
 
-    # Navigates to the previously bought items list.
+    # Navigates to the previously bought items lists
     browser.get(hyvee_home + 'grocery/my-account/lists/frequent-purchases.aspx')
-    page = 1
-    while True:
-        print("Expanding most recent purchases, page {}".format(page))
-        page += 1
 
+    print('Loading page')
+    total_count = WebDriverWait(browser, timeout_delay).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span[id=ctl00_ContentPlaceHolder1_totalItems]')))
+
+    while True:
         try:
-            expand_btn = WebDriverWait(browser,
-                                       timeout_delay).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[id=btnClickToLoadMore]')))
-            expand_btn.send_keys(Keys.END)
-            time.sleep(0.5)
-            expand_btn.send_keys(Keys.PAGE_UP)
-            time.sleep(0.5)
-            expand_btn.click()
-            time.sleep(2)
-        except ElementNotInteractableException as _:
-            print("Reached the end of the product list")
+            print('Trying to get total count')
+            total_count = int(total_count.text)
+            browser.get(hyvee_home + 'grocery/my-account/lists/frequent-purchases.aspx?pages={}'.format(total_count))
+            print('Found {} items'.format(total_count))
             break
-        except TimeoutException as _:
-            print('Load more button never appeared, refreshing, and trying again')
-            browser.refresh()
-            page = 1
+        except StaleElementReferenceException as _:
+            print('Trying to find total count failed, trying again')
+            continue
 
     items = WebDriverWait(browser,
                           timeout_delay).until(EC.presence_of_element_located((By.CSS_SELECTOR,
@@ -107,7 +100,7 @@ def find_recent_purchases(browser: webdriver.Firefox, logged_in: bool, timeout_d
 
     items = items.find_elements_by_css_selector('li[id*=liProduct]')
 
-    print('Found {} products'.format(len(items)))
+    # print('Found {} products'.format(len(items)))
     products = []
     for i in items:
         product_name = i.find_element_by_css_selector('p.li-head').text
