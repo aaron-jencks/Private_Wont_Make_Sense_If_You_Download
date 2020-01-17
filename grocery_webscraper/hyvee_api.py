@@ -77,17 +77,25 @@ def find_recent_purchases(browser: webdriver.Firefox, logged_in: bool, timeout_d
         print('Logging in')
         login(browser, timeout_delay=timeout_delay)
 
-    # Navigates to the previously bought items lists
-    browser.get(hyvee_home + 'grocery/my-account/lists/frequent-purchases.aspx')
+    while True:
+        try:
+            # Navigates to the previously bought items lists
+            browser.get(hyvee_home + 'grocery/my-account/lists/frequent-purchases.aspx')
 
-    print('Loading page')
-    total_count = WebDriverWait(browser, timeout_delay).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span[id=ctl00_ContentPlaceHolder1_totalItems]')))
+            print('Loading page')
+            total_count = WebDriverWait(browser, timeout_delay).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span[id=ctl00_ContentPlaceHolder1_totalItems]')))
+            break
+        except TimeoutException as _:
+            print('Failed to load page, trying again')
+            browser.refresh()
+            continue
 
     while True:
         try:
             print('Trying to get total count')
             total_count = int(total_count.text)
-            browser.get(hyvee_home + 'grocery/my-account/lists/frequent-purchases.aspx?pages={}'.format(total_count))
+            print('Found {} pages'.format(total_count // 60 + (1 if total_count % 60 != 0 else 0)))
+            browser.get(hyvee_home + 'grocery/my-account/lists/frequent-purchases.aspx?pages={}'.format(total_count // 60 + (1 if total_count % 60 != 0 else 0)))
             print('Found {} items'.format(total_count))
             break
         except StaleElementReferenceException as _:
