@@ -86,9 +86,8 @@ def find_recent_purchases(browser: webdriver.Firefox, logged_in: bool, timeout_d
             total_count = WebDriverWait(browser, timeout_delay).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span[id=ctl00_ContentPlaceHolder1_totalItems]')))
             break
         except TimeoutException as _:
-            print('Failed to load page, trying again')
+            print('Failed to load page')
             browser.refresh()
-            continue
 
     while True:
         try:
