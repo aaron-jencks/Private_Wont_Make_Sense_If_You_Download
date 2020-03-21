@@ -49,6 +49,9 @@ class GoogleParser(WebsiteParser):
         return OilWebsite(GoogleParser.prev_oil_price)
 
     def parse(self) -> list:
+
+        print("Looking up: {}".format(self.place))
+
         oil = self.retrieve_crude_price()
 
         ws = find_station(self.browser, self.place)

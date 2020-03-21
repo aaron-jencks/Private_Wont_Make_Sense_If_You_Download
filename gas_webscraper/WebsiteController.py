@@ -39,10 +39,12 @@ class WebsiteController(Process):
         # except Exception as e:
         #     print(e)
         results = []
-        for p in tqdm(self.parsers):
+        for p in self.parsers:  # tqdm(self.parsers):
             parse_results = p.parse()
             if parse_results is not None:
                 results += p.parse()
+            else:
+                print("Result was None, skipping...")
         return results
 
     def run(self) -> None:
