@@ -40,7 +40,9 @@ class WebsiteController(Process):
         #     print(e)
         results = []
         for p in tqdm(self.parsers):
-            results += p.parse()
+            parse_results = p.parse()
+            if parse_results is not None:
+                results += p.parse()
         return results
 
     def run(self) -> None:
