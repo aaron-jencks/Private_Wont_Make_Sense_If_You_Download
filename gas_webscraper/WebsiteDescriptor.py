@@ -67,16 +67,40 @@ class WebsiteDescriptor:
 
     @staticmethod
     def get_headers() -> list:
-        return ["day_of_year", "year", "station_name", "latitude", "longitude", "gallon_price", "barrel_price"]
+        return ["day_of_year", "year",
+                "station_name", "latitude", "longitude",
+                "rating", "rating_count",
+                "gallon_price", "barrel_price"]
 
     def to_array(self) -> list:
-        return [self.doy, self.year, self.name, self.latitude, self.longitude, self.gallon_price, self.barrel_price]
+        return [self.doy, self.year,
+                self.name, self.latitude, self.longitude,
+                self.rating, self.rating_count,
+                self.gallon_price, self.barrel_price]
 
     def to_dict(self) -> dict:
         result = {}
         arr = self.to_array()
         for i, h in enumerate(self.get_headers()):
             result[h] = arr[i]
+        return result
+
+    @staticmethod
+    def from_dict(data: dict):
+        result = WebsiteDescriptor()
+
+        result.name = data['station_name']
+        result.brand = data['station_name']
+        result.address = ''
+        result.latitude = data['latitude']
+        result.longitude = data['longitude']
+        result.gallon_price = data['gallon_price']
+        result.rating = data['rating']
+        result.rating_count = data['rating_count']
+        result.barrel_price = data['barrel_price']
+        result.doy = data['day_of_year']
+        result.year = data['year']
+
         return result
 
 

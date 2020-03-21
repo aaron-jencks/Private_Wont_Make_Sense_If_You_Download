@@ -25,8 +25,14 @@ class Timer(Process):
             print("Timer output queue is full, skipping.")
             
         start = time.time()
-        
-        while self.Stop.empty():
+
+        while True:
+            try:
+                self.Stop.get_nowait()
+                break
+            except Empty as _:
+                pass
+
             diff = time.time() - start
 
             if diff >= self.interval:
@@ -38,7 +44,6 @@ class Timer(Process):
 
                 start = time.time()
 
-            if not self.Rx.empty():
                 try:
                     self.interval = self.Rx.get_nowait()
                 except Empty as _:

@@ -31,59 +31,55 @@ class WebsiteController(Process):
     def __del__(self):
         self.pool.close()
 
-    def poll_websites(self) -> list:
+    def poll_websites(self) -> None:
         """Goes around to each website under its control and calls the 'parse()' method on it."""
         # try:
-        #     parsings = list(self.pool.map(__parse__, self.parsers))
+        #     parsings = [p for p in self.pool.map(__parse__, self.parsers) if p is not None]
         #     return parsings
         # except Exception as e:
         #     print(e)
-        results = []
+        # return []
         for p in self.parsers:  # tqdm(self.parsers):
             parse_results = p.parse()
             if parse_results is not None:
-                results += p.parse()
+                for pr in parse_results:
+                    try:
+                        self.Tx.put_nowait(pr.to_dict())
+                    except Full as _:
+                        print("Ran out of space in the parser queue, skipping\n{}".format(str(parse_results)))
             else:
                 print("Result was None, skipping...")
-        return results
 
     def run(self) -> None:
-        while self.Stop.empty():
-            while not self.Trigger.empty():
-                # Trigger and poll the websites
-                try:
-                    self.Trigger.get_nowait()
-                    results = self.poll_websites()
-                    print("Website Controller triggered.")
+        while True:
+            try:
+                self.Stop.get_nowait()
+                break
+            except Empty as _:
+                pass
 
-                    for r in tqdm(results):
-                        try:
-                            self.Tx.put_nowait(r)
-                        except Full as _:
-                            print("Ran out of space in the parser queue, skipping\n{}".format(str(r)))
-
-                    print("Website Controller finished triggering")
-                except Empty as _:
-                    print("Trigger queue was empty when trying to read from it, what a shame.")
-
-            time.sleep(5)
-
-        while not self.Trigger.empty():
             # Trigger and poll the websites
             try:
                 self.Trigger.get_nowait()
-                results = self.poll_websites()
                 print("Website Controller triggered.")
+                self.poll_websites()
 
-                for r in tqdm(results):
-                    try:
-                        self.Tx.put_nowait(r)
-                    except Full as _:
-                        print("Ran out of space in the parser queue, skipping\n{}".format(str(r)))
+                print("Website Controller finished triggering")
+            except Empty as _:
+                # print("Trigger queue was empty when trying to read from it, what a shame.")
+                time.sleep(5)
+
+        while True:
+            # Trigger and poll the websites
+            try:
+                self.Trigger.get_nowait()
+                print("Website Controller triggered.")
+                self.poll_websites()
 
                 print("Website Controller finished triggering")
             except Empty as _:
                 print("Trigger queue was empty when trying to read from it, what a shame.")
+                return
 
 
 if __name__ == "__main__":

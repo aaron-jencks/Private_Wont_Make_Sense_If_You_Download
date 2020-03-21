@@ -62,45 +62,45 @@ class DataController(Process):
             print("Found erroneous data, skipping")
 
     def run(self) -> None:
-        while self.Stop.empty():
-            while not self.dataq.empty():
-                # Read in the new data to be appended
-                try:
-                    self.append_data(self.dataq.get_nowait())
-                except Empty as _:
-                    print("Data queue was empty when trying to append new data, what a shame.")
-
-            if not self.__saveq.empty():
-                # Save the file
-                while not self.__saveq.empty():
-                    try:
-                        self.filename = self.__saveq.get_nowait()
-                    except Empty as _:
-                        # print("Saving queue was empty when trying to save the data, what a shame.")
-                        break
-
-                self.export_data()
-
-            time.sleep(5)
-
-        while not self.dataq.empty():
-            # Read in the new data to be appended
+        while True:
             try:
-                self.append_data(self.dataq.get_nowait())
+                self.Stop.get_nowait()
+                break
+            except Empty as _:
+                pass
+
+            try:
+                d = WebsiteDescriptor.from_dict(self.dataq.get_nowait())
+                self.append_data(d)
+                self.export_data()
+            except Empty as _:
+                # print("Data queue was empty when trying to append new data, what a shame.")
+                time.sleep(5)
+
+            try:
+                self.filename = self.__saveq.get_nowait()
+                self.export_data()
+            except Empty as _:
+                # print("Saving queue was empty when trying to save the data, what a shame.")
+                pass
+
+        while True:
+            try:
+                d = self.dataq.get_nowait()
+                self.append_data(d)
             except Empty as _:
                 print("Data queue was empty when trying to append new data, what a shame.")
                 break
 
-        if not self.__saveq.empty():
-            # Save the file
-            while not self.__saveq.empty():
-                try:
-                    self.filename = self.__saveq.get_nowait()
-                except Empty as _:
-                    # print("Saving queue was empty when trying to save the data, what a shame.")
-                    break
+        while True:
+            try:
+                self.filename = self.__saveq.get_nowait()
+                self.export_data()
+            except Empty as _:
+                # print("Saving queue was empty when trying to save the data, what a shame.")
+                break
 
-            self.export_data()
+        self.export_data()
 
         print("Stopping the data controller")
         self.Stop.close()

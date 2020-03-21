@@ -55,7 +55,7 @@ class GoogleParser(WebsiteParser):
         oil = self.retrieve_crude_price()
 
         ws = find_station(self.browser, self.place)
-        return [WebsiteDescriptor(ws, oil)]
+        return [WebsiteDescriptor(ws, oil)] if ws is not None and oil is not None else []
 
 
 def import_parsers(filename: str = './places.json') -> list:
