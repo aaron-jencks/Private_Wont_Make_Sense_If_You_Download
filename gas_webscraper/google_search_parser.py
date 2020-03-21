@@ -73,10 +73,10 @@ def export_parsers(parsers: list, filename: str = './places.json'):
         fp.writelines([p.place + '\n' for p in parsers])
 
 
-def generate_parsers(filename: str = './places.json') -> list:
+def generate_parsers(filename: str = './places.json', force_generate: bool = False) -> list:
     """Creates a series of GoogleParsers based on the results of a google maps api search"""
 
-    if os.path.exists(filename):
+    if not force_generate and os.path.exists(filename):
         print("Reading in premade place_ids from {}".format(filename))
         return import_parsers(filename)
     else:

@@ -5,7 +5,7 @@ import time
 
 from Timer import Timer
 from DataController import DataController
-from WebsiteController import WebsiteController
+from mod_WebsiteController import WeeklyUpdateWebsiteController
 from google_search_parser import generate_parsers
 
 
@@ -15,40 +15,23 @@ if __name__ == "__main__":
 
     print("Setting up controllers")
     tm = Timer(interval=24*3600)
+    tm2 = Timer(tm.Stop, interval=24*3600)
     dc = DataController(tm.Stop)
-    wc = WebsiteController(parsers, tm.Stop)
+    wc = WeeklyUpdateWebsiteController(parsers, tm.Stop, dc.dataq, tm.Tx)
 
     tm.start()
+    tm2.start()
     dc.start()
     wc.start()
     print("Waiting for the controllers")
     datum_count = 0
     while True:
-        if not tm.Tx.empty():
+        if not tm2.Tx.empty():
             try:
-                tm.Tx.get_nowait()
-                try:
-                    wc.Trigger.put_nowait(True)
-                except Full as _:
-                    print("Website controller is full, skipping...")
+                tm2.Tx.get_nowait()
+                dc.save()
+                print("Saved data")
             except Empty as _:
                 print("Timer magically became empty while retrieving it, skipping")
-
-        while not wc.Tx.empty():
-            try:
-                datum = wc.Tx.get_nowait()
-                try:
-                    dc.dataq.put_nowait(datum)
-                    datum_count += 1
-                    if datum_count >= 60:
-                        dc.save()
-                        print("Saved data")
-                        datum_count = 0
-                    # dc.save()
-                    # print("Saved data")
-                except Full as _:
-                    print("Data Controller is full, skipping")
-            except Empty as _:
-                print("Website controller magically became empty while retrieving it, skipping")
 
         time.sleep(5)
