@@ -6,7 +6,7 @@ from tqdm import tqdm
 import time
 
 
-gmaps = googlemaps.Client(key='yourKeyHere')
+gmaps = googlemaps.Client(key='AIzaSyAFjRuP86SUl9EtuNOjjr12rY646RSp2Vo')
 
 
 def find_station(browser, place_id: str) -> Website:
